@@ -323,6 +323,12 @@
     sec = Math.max(0, Math.round(sec));
     return `${Math.floor(sec / 60)}:${pad(sec % 60)}`;
   }
+  function dur(sec) {
+    sec = Math.max(0, Math.round(sec));
+    const m = Math.floor(sec / 60), s = sec % 60;
+    if (!m) return `${s}초`;
+    return s ? `${m}분 ${s}초` : `${m}분`;
+  }
   function clockHM(daySec) {
     daySec = Math.floor(daySec) % 86400;
     return `${pad(Math.floor(daySec / 3600))}:${pad(Math.floor(daySec % 3600 / 60))}`;
@@ -619,15 +625,17 @@
       let status = `목표 ${target}`;
       if (rec) {
         cls = 'done';
+        // 실제 소요 시간 = 앞 파트를 끝낸 시점부터 이 파트를 끝낸 시점까지
+        const startedAt = i > 0 ? exam.records[i - 1].at : s.start;
         status = rec.manual
-          ? `${clockHM(exam.base + rec.at)} 완료 · ${ms(s.end - rec.at)} 빨리`
-          : `${target} 통과`;
+          ? `${clockHM(exam.base + rec.at)} 완료 · ${dur(rec.at - startedAt)} 소요`
+          : `${target} 시간 종료`;
       } else if (i === exam.idx) {
         cls = 'current';
         status = `진행 중 · 목표 ${target}`;
       }
       return `<li class="${cls}"><span class="dot"></span>` +
-        `<span class="ck-name">${s.short}<small>${ms(s.end - s.start)}</small></span>` +
+        `<span class="ck-name">${s.short}<small>${dur(s.end - s.start)}</small></span>` +
         `<span class="ck-status">${status}</span></li>`;
     }).join('');
   }
