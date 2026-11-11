@@ -176,7 +176,7 @@
   .checks li.done .dot { border-color: var(--ok); background: var(--ok); }
 
   .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .controls .wide { grid-column: 1 / -1; padding: 14px; font-size: 1.05rem; }
+  .controls .wide { grid-column: 1 / -1; padding: 14px; font-size: 1.05rem; margin-bottom: 10px; }
 
   /* 알림 */
   #banner {
@@ -287,6 +287,7 @@
         </div>
         <div class="controls">
           <button type="button" class="btn primary wide" id="btnNext">다음 파트로 ▶</button>
+          <button type="button" class="btn" id="btnUndo">↩ 되돌리기</button>
           <button type="button" class="btn" id="btnPause">일시정지</button>
           <button type="button" class="btn" id="btnSound"></button>
           <button type="button" class="btn" id="btnFull">전체 화면</button>
@@ -611,6 +612,7 @@
     }
 
     $('btnNext').disabled = exam.done || !!exam.pausedAt || exam.idx >= exam.segs.length - 1;
+    $('btnUndo').disabled = !canUndo();
     $('btnPause').textContent = exam.pausedAt ? '계속하기' : '일시정지';
     $('btnPause').disabled = exam.done;
     $('btnSound').textContent = settings.sound ? '🔔 소리 켬' : '🔕 무음';
@@ -647,6 +649,20 @@
     exam.records[exam.idx] = { at: elapsedSec(), manual: true };
     exam.idx++;
     render(elapsedSec());
+  });
+
+  // 버튼으로 넘긴 파트만 되돌릴 수 있음 (시간이 다 돼서 넘어간 파트는 제외)
+  function canUndo() {
+    return !!exam && !exam.done && exam.idx > 0 && !!exam.records[exam.idx - 1] && exam.records[exam.idx - 1].manual;
+  }
+
+  $('btnUndo').addEventListener('click', () => {
+    if (!canUndo()) return;
+    exam.idx--;
+    exam.records.length = exam.idx;
+    exam.alerted.delete(exam.idx);   // 목표 시각이 이미 지났다면 정상 알림과 함께 다시 넘어감
+    notify(`${exam.segs[exam.idx].short}(으)로 되돌렸어요`, false);
+    tick();
   });
 
   $('btnPause').addEventListener('click', () => {
